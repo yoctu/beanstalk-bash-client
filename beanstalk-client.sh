@@ -216,7 +216,7 @@ function watch ()
                 jobid="${lines[1]}"
             else
                 # save data
-                data+="${lines[@]} "
+                data+=" ${lines[@]} "
             fi
         done < <(reserve)    
 
