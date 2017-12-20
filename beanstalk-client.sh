@@ -216,7 +216,7 @@ function watch ()
                 jobid="${lines[1]}"
             else
                 # save data
-                data+="${lines[@]}\n"
+                data+="${lines[@]} "
             fi
         done < <(reserve)    
 
@@ -272,4 +272,3 @@ case "$_action" in
     watch)      watch                                                   ;;
     *)          _quit 2 "Action not Found! $HELP"                       ;;
 esac
-
