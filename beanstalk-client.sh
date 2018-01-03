@@ -108,7 +108,7 @@ function my_sed ()
 
 function my_grep ()
 {
-    grep -v UNKNOWN_COMMAND
+    egrep -v '(UNKNOWN_COMMAND|USING)'
 }
 
 function value-checker ()
@@ -130,7 +130,7 @@ function put ()
     bytes="${#data}"
 
     # use sed to just have a propper tabulation :)
-    echo -e "
+    echo -e "\
         use $_tube\r\n\
         put $priority $delay $ttr $bytes\r\n\
         $data\r\n
@@ -144,7 +144,7 @@ function peek-ready ()
     # check if values are set
     value-checker _tube
 
-    echo -e "
+    echo -e "\
         use $_tube\r\n\
         peek-ready\r\n
     " | my_sed | my_nc | my_grep 
@@ -157,7 +157,7 @@ function delete ()
     # check if values are set
     value-checker _tube jobid
 
-    echo -e "
+    echo -e "\
         use $_tube\r\n\
         delete $jobid\r\n
     " | my_sed | my_nc | my_grep
@@ -170,7 +170,7 @@ function bury ()
     # check if values are set
     value-checker _tube jobid priority
 
-    echo -e "
+    echo -e "\
         use $_tube\r\n\
         bury $jobid $priority\r\n
     " | my_sed | my_nc | my_grep
@@ -181,7 +181,7 @@ function reserve ()
     # check if values are set
     value-checker _tube
     
-    echo -e "
+    echo -e "\
         use $_tube\r\n\
         reserve\r\n
     " | my_sed | my_nc | my_grep
@@ -194,7 +194,7 @@ function release ()
     # check if values are set 
     value-checker _tube jobid priority delay
     
-    echo -e "
+    echo -e "\
         use $_tube\r\n\
         release $jobid $priority $delay\r\n
     " | my_sed | my_nc | my_grep
@@ -211,18 +211,19 @@ function watch ()
         while read -ra lines 
         do
             # check what the line contains
-            if [[ "${lines[0]}" =~ "RESERVED"* ]]
+            if [[ "${lines[0]}" =~ "FOUND"* ]]
             then
                 jobid="${lines[1]}"
-            else
+            elif ! [[ "${lines[0]}" =~ "NOT_FOUND"* ]]
+            then
                 # save data
                 data+=" ${lines[@]} "
             fi
-        done < <(reserve)    
+        done < <(peek-ready)    
 
         if [[ ! -z "$jobid" ]]
         then
-            echo -e "$data"
+            echo -e " $jobid = $data"
             delete "$jobid" | grep -v DELETE
             unset jobid data
         fi
@@ -272,3 +273,4 @@ case "$_action" in
     watch)      watch                                                   ;;
     *)          _quit 2 "Action not Found! $HELP"                       ;;
 esac
+
